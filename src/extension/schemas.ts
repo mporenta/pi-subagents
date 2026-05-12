@@ -99,6 +99,10 @@ const ControlOverrides = Type.Object({
 });
 
 export const SubagentParams = Type.Object({
+	workflow: Type.Optional(Type.String({
+		enum: ["implementation", "research_handoff", "parallel_review"],
+		description: "Use a built-in pi-subagents workflow preset. Applied only when agent/tasks/chain are omitted.",
+	})),
 	agent: Type.Optional(Type.String({ description: "Agent name (SINGLE mode) or target for management get/update/delete" })),
 	task: Type.Optional(Type.String({ description: "Task (SINGLE mode, optional for self-contained agents)" })),
 	// Management action (when present, tool operates in management mode)
