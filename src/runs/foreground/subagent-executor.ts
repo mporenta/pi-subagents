@@ -47,6 +47,7 @@ import {
 } from "../../intercom/result-intercom.ts";
 import { buildRevivedAsyncTask, resolveAsyncResumeTarget } from "../background/async-resume.ts";
 import { inspectSubagentStatus } from "../background/run-status.ts";
+import { resolveBuiltinWorkflow, type BuiltinWorkflowName } from "../../extension/pi-subagent-workflows.ts";
 import { applyForceTopLevelAsyncOverride } from "../background/top-level-async.ts";
 import {
 	cleanupWorktrees,
@@ -99,6 +100,7 @@ interface TaskParam {
 }
 
 export interface SubagentParamsLike {
+	workflow?: BuiltinWorkflowName;
 	action?: string;
 	id?: string;
 	runId?: string;
@@ -127,6 +129,13 @@ export interface SubagentParamsLike {
 	outputMode?: "inline" | "file-only";
 	agentScope?: unknown;
 	chainDir?: string;
+}
+
+function withWorkflowPreset(params: SubagentParamsLike): SubagentParamsLike {
+	if (!params.workflow || params.agent || params.tasks || params.chain) return params;
+	const task = (params.task ?? "").trim();
+	if (!task) return params;
+	return { ...params, ...resolveBuiltinWorkflow(params.workflow, task) };
 }
 
 interface ExecutorDeps {
@@ -2083,6 +2092,7 @@ export function createSubagentExecutor(deps: ExecutorDeps): {
 			depth,
 			deps.config.forceTopLevelAsync === true,
 		);
+		effectiveParams = withWorkflowPreset(effectiveParams);
 
 		const scope: AgentScope = resolveExecutionAgentScope(effectiveParams.agentScope);
 		const effectiveCwd = effectiveParams.cwd ?? ctx.cwd;
